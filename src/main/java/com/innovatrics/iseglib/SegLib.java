@@ -75,7 +75,7 @@ public class SegLib {
     }
 
     /**
-     *	Initializes the library. This function initializes and checks the integrity of the library and verifies the validity
+     *	Initializes the library.<p/>This function initializes and checks the integrity of the library and verifies the validity
      *	of the license. It should be called prior to any other function from the library.
      */
     public void init() {
@@ -83,7 +83,7 @@ public class SegLib {
     }
 
     /**
-     * Sets license data for further license check.
+     * Sets license data for further license check.<p/>
      * This function sets the license data for license check done when calling ISegLib_Init.
      * This function helps to avoid the usage of license files. It is meant to protect the license file content.
      * It has to be called before ISegLib_Init function.
@@ -95,7 +95,7 @@ public class SegLib {
     }
 
     /**
-     * Terminates the use of the library.
+     * Terminates the use of the library.<p/>
      * This function releases all resources allocated by the library.
      * It should be called as the very last function of the library.
      */
@@ -104,7 +104,8 @@ public class SegLib {
     }
 
     /**
-     * Returns the library version.	This function returns the version number of the library
+     * Returns the library version.<p/>
+     * This function returns the version number of the library
      * @return version, never null
      */
     public SegLibVersion getVersion() {
@@ -115,7 +116,7 @@ public class SegLib {
     }
 
     /**
-     * Returns NFIQ score (quality score defined by NIST) a single fingerprint image.
+     * Returns NFIQ score (quality score defined by NIST) a single fingerprint image.<p/>
      * This function returns NFIQ score (quality score defined by NIST) a fingerprint image
      * quality of the input fingerprint image. Image quality number is calculated in accordance with the general guidelines contained in Section 2.1.42 of ANSI/INCITS 358 standard.
      * @param width The number of pixels indicating the width of the image
@@ -128,5 +129,43 @@ public class SegLib {
         final IntByReference result = new IntByReference();
         check(SegLibNative.INSTANCE.ISegLib_NFIQScore(width, height, imageResolution, rawImage, result));
         return result.getValue();
+    }
+
+    /**
+     * Returns quality of a single fingerprint image.<p/>
+     * This function returns quality of the input fingerprint image. Image quality number is calculated in accordance with the general guidelines contained in Section 2.1.42 of ANSI/INCITS 358 standard.
+     * @param width - [in] The number of pixels indicating the width of the image
+     * @param height - [in] The number of pixels indicating the height of the image
+     * @param imageResolution - [in] Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
+     * @param rawImage - [in] Pointer to the uncompressed raw image
+     * @return quality; the output range is from 0 (lowest quality) to 100 (highest quality)
+     */
+    public int getImageQuality(int width, int height, int imageResolution, final byte[] rawImage) {
+        final IntByReference result = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQuality(width, height, imageResolution, rawImage, result));
+        return result.getValue();
+    }
+
+    /**
+     *	Returns color image quality map and total number of active pixels in the image.<p/>
+     * 	This function returns color quality map as bmp image of the input fingerprint image.
+     *	It also retuns total number of active pixels (pixels located in high quality zone, not lying in the noisy background).
+     *	Total active pixels count can be used in order to detect void/blank images.
+     *	This function works for both slap images and single finger images.
+     * @param	width The number of pixels indicating the width of the image
+     * @param	height The number of pixels indicating the height of the image
+     * @param	imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
+     * @param	rawImage Pointer to the uncompressed raw image
+     * @return image with quality.
+     */
+    public SegLibImage getImageQualityInfo(int width, int height, int imageResolution, final byte[] rawImage) {
+        final IntByReference length = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, null, length, null));
+        final SegLibImage result = new SegLibImage();
+        result.colorQualityBmpImage = new byte[length.getValue()];
+        final IntByReference activePixelsCount = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, result.colorQualityBmpImage, length, activePixelsCount));
+        result.activePixelsCount = activePixelsCount.getValue();
+        return result;
     }
 }
