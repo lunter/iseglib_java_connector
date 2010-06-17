@@ -19,6 +19,6 @@ public enum SegLibImageFormatEnum {
                 return format;
             }
         }
-        throw new SegLibException("Invalid ISEGLIB_IMAGE_FORMAT value: " + cval);
+        throw new SegLibException("Invalid ISEGLIB_IMAGE_FORMAT value: " + cval, -1);
     }
 }
