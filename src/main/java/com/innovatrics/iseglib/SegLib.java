@@ -134,10 +134,10 @@ public class SegLib {
     /**
      * Returns quality of a single fingerprint image.<p/>
      * This function returns quality of the input fingerprint image. Image quality number is calculated in accordance with the general guidelines contained in Section 2.1.42 of ANSI/INCITS 358 standard.
-     * @param width - [in] The number of pixels indicating the width of the image
-     * @param height - [in] The number of pixels indicating the height of the image
-     * @param imageResolution - [in] Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
-     * @param rawImage - [in] Pointer to the uncompressed raw image
+     * @param width The number of pixels indicating the width of the image
+     * @param height The number of pixels indicating the height of the image
+     * @param imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
+     * @param rawImage Pointer to the uncompressed raw image
      * @return quality; the output range is from 0 (lowest quality) to 100 (highest quality)
      */
     public int getImageQuality(int width, int height, int imageResolution, final byte[] rawImage) {
@@ -152,19 +152,17 @@ public class SegLib {
      *	It also retuns total number of active pixels (pixels located in high quality zone, not lying in the noisy background).
      *	Total active pixels count can be used in order to detect void/blank images.
      *	This function works for both slap images and single finger images.
-     * @param	width The number of pixels indicating the width of the image
-     * @param	height The number of pixels indicating the height of the image
      * @param	imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
-     * @param	rawImage Pointer to the uncompressed raw image
+     * @param	raw uncompressed raw image
      * @return image with quality.
      */
-    public SegLibImage getImageQualityInfo(int width, int height, int imageResolution, final byte[] rawImage) {
+    public SegLibImage getImageQualityInfo(final RawImage raw, int imageResolution) {
         final IntByReference length = new IntByReference();
         final IntByReference activePixelsCount = new IntByReference();
-        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, null, length, activePixelsCount));
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, null, length, activePixelsCount));
         final SegLibImage result = new SegLibImage();
         result.colorQualityBmpImage = new byte[length.getValue()];
-        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, result.colorQualityBmpImage, length, activePixelsCount));
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, result.colorQualityBmpImage, length, activePixelsCount));
         result.activePixelsCount = activePixelsCount.getValue();
         return result;
     }
@@ -175,10 +173,8 @@ public class SegLib {
      *	image with color boxes indicating positions of detected fingers, returns number of
      *	prints detected in the input image, returns information on missing digits (fingers),
      *	for 4 and 3 finger slap images, returns information about hand position (left/right hand).
-     * @param	width The number of pixels indicating the width of the image
-     * @param	height The number of pixels indicating the height of the image
+     * @param	raw Pointer to the uncompressed raw image
      * @param	imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
-     * @param	rawImage Pointer to the uncompressed raw image
      * @param	expectedFingersCount Number if fingers expected to be found in the input slap image. Valid range: 0..4
      * @param	minFingersCount Minimum number of fingers that has to be detected in the input slap image. If less fingers are detected, an error code is returned. Valid range: 0..4
      * @param	maxFingersCount Maximum number of fingers that has to be detected in the input slap image. If more fingers are detected, an error code is returned. Valid range: 0..4
@@ -189,7 +185,7 @@ public class SegLib {
      * @param	bcgValue Value used for background for returned segmented images if these images have smaller dimensions than outWith,outHeight
      * @return segmentation result, never null.
      */
-    public SegmentationResult segmentFingerprints(int width, int height, int imageResolution, final byte[] rawImage, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, int outWidth, int outHeight, byte bcgValue) {
+    public SegmentationResult segmentFingerprints(final RawImage raw, int imageResolution, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, int outWidth, int outHeight, byte bcgValue) {
         final SegmentationResult result = new SegmentationResult();
         final IntByReference globalAngle = new IntByReference();
         final IntByReference segmentedFingersCount = new IntByReference();
@@ -200,9 +196,9 @@ public class SegLib {
         final byte[] rawImage2 = new byte[outRawLength];
         final byte[] rawImage3 = new byte[outRawLength];
         final byte[] rawImage4 = new byte[outRawLength];
-        final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(width, height));
+        final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(raw.width, raw.height));
         result.boxedBmpImage = new byte[boxedBmpImageLength.getValue()];
-        check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(width, height, imageResolution, rawImage, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth, outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback));
+        check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.rawImage, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth, outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback));
         if (boxedBmpImageLength.getValue() > result.boxedBmpImage.length) {
             // the array was not sufficient. This is not expected... the getColorBmpLength method should have computed the correct number...
             throw new AssertionError("the array was not sufficient: assumed that " + result.boxedBmpImage.length + " bytes would be enough but " + boxedBmpImageLength.getValue() + " was requested");
@@ -232,17 +228,15 @@ public class SegLib {
     /**
      *	Performs manual segmentation, e.g. extracts specified rectangle from slap image.<p/>
      *	This function returns the content of the rectangle as manually specified by user. The content of this rectangle is returned as raw image.
-     * @param	width The number of pixels indicating the width of the image
-     * @param	height The number of pixels indicating the height of the image
-     * @param	rawImage Pointer to the uncompressed raw image
+     * @param	raw Pointer to the uncompressed raw image
      * @param	rect the rectangle
      * @param	outWidth Indicates width of returned raw image. If extracted image is smaller, it will be centered in the middle and border will be set to bcgValue
      * @param	outHeight Indicates height of returned raw image. If extracted image is smaller, it will be centered in the middle and border will be set to bcgValue
      * @param	bcgValue Value used for background for returned image if this image has smaller dimensions than outWith,outHeight
      */
-    public byte[] manualSegmentation(int width, int height, byte[] rawImage, final Rect rect, int outWidth, int outHeight, byte bcgValue) {
+    public byte[] manualSegmentation(final RawImage raw, final Rect rect, int outWidth, int outHeight, byte bcgValue) {
         final byte[] outRawImage = new byte[outWidth * outHeight];
-        check(SegLibNative.INSTANCE.ISegLib_ManualSegmentation(width, height, rawImage, rect.point1.x, rect.point1.y, rect.point2.x, rect.point2.y, rect.point3.x, rect.point3.y, rect.point4.x, rect.point4.y, outWidth, outHeight, outRawImage, bcgValue));
+        check(SegLibNative.INSTANCE.ISegLib_ManualSegmentation(raw.width, raw.height, raw.rawImage, rect.point1.x, rect.point1.y, rect.point2.x, rect.point2.y, rect.point3.x, rect.point3.y, rect.point4.x, rect.point4.y, outWidth, outHeight, outRawImage, bcgValue));
         return outRawImage;
     }
 
@@ -251,15 +245,13 @@ public class SegLib {
      *	This function analyzes fingerprint image contained in the input image and returns the intensity of the contained print(s).
      *	The intensity value is low for dry fingerprints (and for low pressure prints) and high for wet fingerprints (or for high pressure prints)
      *	This function can be either used with single finger images or with slap images.
-     * @param	width The number of pixels indicating the width of the image
-     * @param	height The number of pixels indicating the height of the image
-     * @param	rawImage the uncompressed raw image
+     * @param	raw the uncompressed raw image
      * @return	intensity Indicates the intensity of the input image. Returned values are in the following range: 0..100.
      * 0 means lowest intensity (dry finger, low pressure), 100 means highest intensity (wet fnger, high pressure).
      */
-    public int getImageIntensity(int width, int height, byte[] rawImage) {
+    public int getImageIntensity(final RawImage raw) {
         final IntByReference intensity = new IntByReference();
-        check(SegLibNative.INSTANCE.ISegLib_GetImageIntensity(width, height, rawImage, intensity));
+        check(SegLibNative.INSTANCE.ISegLib_GetImageIntensity(raw.width, raw.height, raw.rawImage, intensity));
         return intensity.getValue();
     }
 

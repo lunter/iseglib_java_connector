@@ -3,7 +3,7 @@ package com.innovatrics.iseglib;
 import java.awt.Point;
 
 /**
- * A rectangle.
+ * A rectangle, may eventually be rotated.
  * @author Martin Vysny
  */
 public class Rect {

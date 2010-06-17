@@ -6,6 +6,12 @@ package com.innovatrics.iseglib;
  */
 public class RawImage {
 
+    /**
+     * Creates a new raw image.
+     * @param width The number of pixels indicating the width of the image
+     * @param height The number of pixels indicating the height of the image
+     * @param rawImage raw image in 8-bit raw format,
+     */
     public RawImage(int width, int height, byte[] rawImage) {
         this.width = width;
         this.height = height;
