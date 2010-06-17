@@ -1,5 +1,7 @@
 package com.innovatrics.iseglib;
 
+import java.util.EnumSet;
+
 /**
  *
  * @author Martin Vysny
@@ -17,5 +19,15 @@ public enum SegInfoEnum {
 
     private SegInfoEnum(final int cflag) {
         this.cflag = cflag;
+    }
+
+    public static EnumSet<SegInfoEnum> fromFeedback(final int cflags) {
+        final EnumSet<SegInfoEnum> result = EnumSet.noneOf(SegInfoEnum.class);
+        for (final SegInfoEnum si : SegInfoEnum.values()) {
+            if ((cflags & si.cflag) != 0) {
+                result.add(si);
+            }
+        }
+        return result;
     }
 }

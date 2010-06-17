@@ -55,7 +55,7 @@ public class SegLib {
 
         int ISegLib_GetImageQualityInfo(int width, int height, int imageResolution, final byte[] rawImage, byte[] colorQualityBmpImage, IntByReference length, IntByReference activePixelsCount);
 
-        int ISegLib_SegmentFingerprints(int width, int height, int imageResolution, final byte[] rawImage, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, IntByReference segmentedFingersCount, IntByReference globalAngle, IntByReference roundingBoxes, byte[] boxedBmpImage, IntByReference boxedBmpImageLength, int outWidth, int outHeight, byte[] rawImage1, byte[] rawImage2, byte[] rawImage3, byte[] rawImage4, byte bcgValue, IntByReference feedback);
+        int ISegLib_SegmentFingerprints(int width, int height, int imageResolution, final byte[] rawImage, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, IntByReference segmentedFingersCount, IntByReference globalAngle, int[] roundingBoxes, byte[] boxedBmpImage, IntByReference boxedBmpImageLength, int outWidth, int outHeight, byte[] rawImage1, byte[] rawImage2, byte[] rawImage3, byte[] rawImage4, byte bcgValue, IntByReference feedback);
 
         int ISegLib_ManualSegmentation(int width, int height, byte[] rawImage, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, int outWidth, int outHeight, byte[] outRawImage, byte bcgValue);
 
@@ -160,12 +160,72 @@ public class SegLib {
      */
     public SegLibImage getImageQualityInfo(int width, int height, int imageResolution, final byte[] rawImage) {
         final IntByReference length = new IntByReference();
-        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, null, length, null));
+        final IntByReference activePixelsCount = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, null, length, activePixelsCount));
         final SegLibImage result = new SegLibImage();
         result.colorQualityBmpImage = new byte[length.getValue()];
-        final IntByReference activePixelsCount = new IntByReference();
         check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(width, height, imageResolution, rawImage, result.colorQualityBmpImage, length, activePixelsCount));
         result.activePixelsCount = activePixelsCount.getValue();
         return result;
+    }
+
+    /**
+     *	Segments slap fingerprint image into individual prints.<p/>
+     *	This function separates slap fingerprint image into individual prints, returns
+     *	image with color boxes indicating positions of detected fingers, returns number of
+     *	prints detected in the input image, returns information on missing digits (fingers),
+     *	for 4 and 3 finger slap images, returns information about hand position (left/right hand).
+     * @param	width The number of pixels indicating the width of the image
+     * @param	height The number of pixels indicating the height of the image
+     * @param	imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
+     * @param	rawImage Pointer to the uncompressed raw image
+     * @param	expectedFingersCount Number if fingers expected to be found in the input slap image. Valid range: 0..4
+     * @param	minFingersCount Minimum number of fingers that has to be detected in the input slap image. If less fingers are detected, an error code is returned. Valid range: 0..4
+     * @param	maxFingersCount Maximum number of fingers that has to be detected in the input slap image. If more fingers are detected, an error code is returned. Valid range: 0..4
+     * @param	maxRotation Value indicating maximum rotation of fingers in the input slap image. Value is in degrees. Valid range: 0..45
+     * @param	options Reserved for future use, should be set to 0.
+     * @param	outWidth Indicates width of returned raw images of segmented fingers. If found segmented fingers are smaller, they will be centered in the middle and border will be set to bcgValue
+     * @param	outHeight Indicates height of returned raw images of segmented fingers. If found segmented fingers are smaller, they will be centered in the middle and border will be set to bcgValue
+     * @param	bcgValue Value used for background for returned segmented images if these images have smaller dimensions than outWith,outHeight
+     * @return segmentation result, never null.
+     */
+    public SegmentationResult segmentFingerprints(int width, int height, int imageResolution, final byte[] rawImage, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, int outWidth, int outHeight, byte bcgValue) {
+        final SegmentationResult result = new SegmentationResult();
+        final IntByReference globalAngle = new IntByReference();
+        final IntByReference segmentedFingersCount = new IntByReference();
+        final IntByReference feedback = new IntByReference();
+        final int[] roundingBoxes = new int[8 * 4];
+        final int outRawLength = outWidth * outHeight;
+        final byte[] rawImage1 = new byte[outRawLength];
+        final byte[] rawImage2 = new byte[outRawLength];
+        final byte[] rawImage3 = new byte[outRawLength];
+        final byte[] rawImage4 = new byte[outRawLength];
+        final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(width, height));
+        result.boxedBmpImage = new byte[boxedBmpImageLength.getValue()];
+        check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(width, height, imageResolution, rawImage, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth, outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback));
+        if (boxedBmpImageLength.getValue() > result.boxedBmpImage.length) {
+            // the array was not sufficient. This is not expected... the getColorBmpLength method should have computed the correct number...
+            throw new AssertionError("the array was not sufficient: assumed that " + result.boxedBmpImage.length + " bytes would be enough but " + boxedBmpImageLength.getValue() + " was requested");
+        }
+        result.globalAngle = globalAngle.getValue();
+        result.segmentedFingersCount = segmentedFingersCount.getValue();
+        result.feedback = SegInfoEnum.fromFeedback(feedback.getValue());
+        byte[][] rawImages = new byte[][]{rawImage1, rawImage2, rawImage3, rawImage4};
+        result.fingerprints = new SegmentedFingerprint[result.segmentedFingersCount];
+        for (int i = 0; i < result.segmentedFingersCount; i++) {
+            final SegmentedFingerprint sf = new SegmentedFingerprint();
+            result.fingerprints[i] = sf;
+            sf.rawImage = rawImages[i];
+            sf.roundingBox = Rect.from(roundingBoxes, i * 8);
+        }
+        return result;
+    }
+
+    private static int getColorBmpLength(int width, int height) {
+        int offset = (width * 3) & 0x03;
+        if (offset != 0) {
+            offset = 4 - offset;
+        }
+        return 54 + (3 * width + offset) * height;
     }
 }
