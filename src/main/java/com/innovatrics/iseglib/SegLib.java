@@ -228,4 +228,74 @@ public class SegLib {
         }
         return 54 + (3 * width + offset) * height;
     }
+
+    /**
+     *	Performs manual segmentation, e.g. extracts specified rectangle from slap image.<p/>
+     *	This function returns the content of the rectangle as manually specified by user. The content of this rectangle is returned as raw image.
+     * @param	width The number of pixels indicating the width of the image
+     * @param	height The number of pixels indicating the height of the image
+     * @param	rawImage Pointer to the uncompressed raw image
+     * @param	rect the rectangle
+     * @param	outWidth Indicates width of returned raw image. If extracted image is smaller, it will be centered in the middle and border will be set to bcgValue
+     * @param	outHeight Indicates height of returned raw image. If extracted image is smaller, it will be centered in the middle and border will be set to bcgValue
+     * @param	bcgValue Value used for background for returned image if this image has smaller dimensions than outWith,outHeight
+     */
+    public byte[] manualSegmentation(int width, int height, byte[] rawImage, final Rect rect, int outWidth, int outHeight, byte bcgValue) {
+        final byte[] outRawImage = new byte[outWidth * outHeight];
+        check(SegLibNative.INSTANCE.ISegLib_ManualSegmentation(width, height, rawImage, rect.point1.x, rect.point1.y, rect.point2.x, rect.point2.y, rect.point3.x, rect.point3.y, rect.point4.x, rect.point4.y, outWidth, outHeight, outRawImage, bcgValue));
+        return outRawImage;
+    }
+
+    /**
+     *	Returns image intensity (darkness).<p/>
+     *	This function analyzes fingerprint image contained in the input image and returns the intensity of the contained print(s).
+     *	The intensity value is low for dry fingerprints (and for low pressure prints) and high for wet fingerprints (or for high pressure prints)
+     *	This function can be either used with single finger images or with slap images.
+     * @param	width The number of pixels indicating the width of the image
+     * @param	height The number of pixels indicating the height of the image
+     * @param	rawImage the uncompressed raw image
+     * @return	intensity Indicates the intensity of the input image. Returned values are in the following range: 0..100.
+     * 0 means lowest intensity (dry finger, low pressure), 100 means highest intensity (wet fnger, high pressure).
+     */
+    public int getImageIntensity(int width, int height, byte[] rawImage) {
+        final IntByReference intensity = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_GetImageIntensity(width, height, rawImage, intensity));
+        return intensity.getValue();
+    }
+
+    /**
+     *	Reads formatted image from memory and converts it to raw 8-bit format.<p/>
+     *	This function reads image encoded in a byte array and converts it
+     *	to raw 8-bit format as described in paragraph <link Fingerprint Image Data>
+     * @param	imageData the image in BMP format stored in the memory
+     * @param	imageLength Indicates length of input image
+     * @param	imageFormat Indicates format in which input image is encoded
+     * @return raw image, never null.
+     */
+    public RawImage convertToRaw(final byte[] imageData, int imageLength, SegLibImageFormatEnum imageFormat) {
+        final IntByReference length = new IntByReference();
+        final IntByReference width = new IntByReference();
+        final IntByReference height = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_ConvertToRaw(imageData, imageLength, imageFormat.cval, width, height, null, length));
+        final byte[] raw = new byte[length.getValue()];
+        check(SegLibNative.INSTANCE.ISegLib_ConvertToRaw(imageData, imageLength, imageFormat.cval, width, height, raw, length));
+        return new RawImage(width.getValue(), height.getValue(), raw);
+    }
+
+    /**
+     *	Converts raw 8-bit image into formatted image.<p/>
+     *	This function reads raw 8-bit image and encodes it into specified image format
+     * @param raw the raw image
+     * @param    imageFormat Indicates image format in which the output image should be encoded
+     * @param    bitrate Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
+     * @return input image will be encoded as specified and returned. See also values {@link #INTENSITY_THRESHOLD_TOO_DARK} and
+     * {@link #INTENSITY_THRESHOLD_TOO_LIGHT} constants for recommended thresholds defining too dark and too light prints.
+     */
+    public byte[] convertRawToImage(final RawImage raw, byte[] outImage, SegLibImageFormatEnum imageFormat, int bitrate) {
+        final IntByReference length = new IntByReference();
+        check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, bitrate, length));
+        final byte[] result = new byte[length.getValue()];
+        check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, result, imageFormat.cval, bitrate, length));
+        return result;
+    }
 }
