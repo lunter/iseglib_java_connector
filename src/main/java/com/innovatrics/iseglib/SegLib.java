@@ -283,7 +283,7 @@ public class SegLib {
      * @return input image will be encoded as specified and returned. See also values {@link #INTENSITY_THRESHOLD_TOO_DARK} and
      * {@link #INTENSITY_THRESHOLD_TOO_LIGHT} constants for recommended thresholds defining too dark and too light prints.
      */
-    public byte[] convertRawToImage(final RawImage raw, byte[] outImage, SegLibImageFormatEnum imageFormat, int bitrate) {
+    public byte[] convertRawToImage(final RawImage raw, SegLibImageFormatEnum imageFormat, int bitrate) {
         final IntByReference length = new IntByReference();
         check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, bitrate, length));
         final byte[] result = new byte[length.getValue()];
