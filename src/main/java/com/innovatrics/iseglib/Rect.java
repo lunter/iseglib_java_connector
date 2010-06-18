@@ -39,4 +39,13 @@ public class Rect {
     public static Rect from(int[] array, int off) {
         return new Rect(array[off], array[off + 1], array[off + 2], array[off + 3], array[off + 4], array[off + 5], array[off + 6], array[off + 7]);
     }
+
+    @Override
+    public String toString() {
+        return "Rect{" + toS(point1) + "," + toS(point2) + "," + toS(point3) + "," + toS(point4) + '}';
+    }
+
+    private static String toS(Point p) {
+        return "[" + p.x + "," + p.y + "]";
+    }
 }
