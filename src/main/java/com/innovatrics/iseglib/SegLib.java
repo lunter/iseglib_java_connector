@@ -61,6 +61,8 @@ public class SegLib {
 
         int ISegLib_GetImageIntensity(int width, int height, byte[] rawImage, IntByReference intensity);
 
+        int ISegLib_RemoveBackgroundNoise(int width, int height, final byte[] rawImage, int filterPower, int options, byte bcgValue, byte[] outputRawImage);
+
         int ISegLib_ConvertToRaw(final byte[] imageData, int imageLength, int/*ISEGLIB_IMAGE_FORMAT*/ imageFormat, IntByReference width, IntByReference height, byte[] rawImage, IntByReference rawImageLength);
 
         int ISegLib_ConvertRawToImage(final byte[] rawImage, int width, int height, byte[] outImage, int /*ISEGLIB_IMAGE_FORMAT*/ imageFormat, int bitrate, IntByReference length);
@@ -280,6 +282,10 @@ public class SegLib {
      * @param raw the raw image
      * @param    imageFormat Indicates image format in which the output image should be encoded
      * @param    bitrate Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
+     *	Real value of bitrate is calculated as bitrate/100.0. For WSQ images, recommended range of this parameter is 5..250 (corresponds to bitrates from 0.05 to 2.5).
+     *	For JPEG2000 images, bitrate is interpreted as desired compression factor. Bitrate 100 means no compression, bitrate 10 means
+     *	that final size of JPEG2000 image should be 10% of the size of original raw image. For JPEG2000, specifying bitrate parameter greater to 100 has
+     *	no effect (produces same result as bitrate=100)
      * @return input image will be encoded as specified and returned. See also values {@link #INTENSITY_THRESHOLD_TOO_DARK} and
      * {@link #INTENSITY_THRESHOLD_TOO_LIGHT} constants for recommended thresholds defining too dark and too light prints.
      */
@@ -288,6 +294,24 @@ public class SegLib {
         check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, bitrate, length));
         final byte[] result = new byte[length.getValue()];
         check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, result, imageFormat.cval, bitrate, length));
+        return result;
+    }
+
+    /**
+     *	Removes background noise from the image.<p/>
+     *	This function analyzes noise level in the input fingerprint image and sets background (low quality part of the image) to
+     *	the specified value.
+     *	This function can be either used with single finger images or with slap images.
+     * @param raw uncompressed raw image
+     * @param filterPower Indicates how much of the background should be eliminated. Valid range: 0..100. Recommended value is 50.
+     *		Bigger value means more eliminated background.
+     * @param options Reserved for future use. Always set to 0.
+     * @param bcgValue Value that will be set in all parts of the image classified as background. 255 means white color.
+     * @return outputRawImage output image (after background removal). The size of memory pointed by this parameter has to be at least width*height bytes.
+     */
+    public byte[] removeBackgroundNoise(final RawImage raw, int filterPower, int options, byte bcgValue, byte[] outputRawImage) {
+        final byte[] result = new byte[raw.width * raw.height];
+        check(SegLibNative.INSTANCE.ISegLib_RemoveBackgroundNoise(raw.width, raw.height, raw.rawImage, filterPower, options, bcgValue, result));
         return result;
     }
 }
