@@ -10,7 +10,7 @@ public class RawImage {
      * Creates a new raw image.
      * @param width The number of pixels indicating the width of the image
      * @param height The number of pixels indicating the height of the image
-     * @param rawImage raw image in 8-bit raw format,
+     * @param rawImage raw image in 8-bit greyscale raw format (0=black, 255=white),
      */
     public RawImage(int width, int height, byte[] rawImage) {
         this.width = width;

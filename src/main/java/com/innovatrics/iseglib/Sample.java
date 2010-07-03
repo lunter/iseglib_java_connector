@@ -84,7 +84,7 @@ public class Sample {
             final SegmentedFingerprint fp = segs.fingerprints[i];
             System.out.println("Finger #" + (i + 1));
             System.out.println("Cointaining rectangle: " + fp.roundingBox);
-            final int intensity = lib.getImageIntensity(new RawImage(outWidth, outHeight, fp.rawImage));
+            final int intensity = lib.getImageIntensity(new RawImage(outWidth, outHeight, fp.rawImage.rawImage));
 
             System.out.println("Image intensity: " + intensity);
             if (intensity < SegLib.INTENSITY_THRESHOLD_TOO_LIGHT) {
@@ -93,7 +93,7 @@ public class Sample {
             if (intensity > SegLib.INTENSITY_THRESHOLD_TOO_DARK) {
                 System.out.println("Image too dark, too high pressure or wet finger.");
             }
-            final byte[] bmp = lib.convertRawToImage(new RawImage(outWidth, outHeight, fp.rawImage), SegLibImageFormatEnum.BMP, 0);
+            final byte[] bmp = lib.convertRawToImage(new RawImage(outWidth, outHeight, fp.rawImage.rawImage), SegLibImageFormatEnum.BMP, 0);
             final String s = "finger" + (i + 1) + ".bmp";
             write(bmp, s);
             System.out.println("Image saved as " + s);

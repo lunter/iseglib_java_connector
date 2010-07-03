@@ -139,15 +139,12 @@ public class SegLib {
     /**
      * Returns quality of a single fingerprint image.<p/>
      * This function returns quality of the input fingerprint image. Image quality number is calculated in accordance with the general guidelines contained in Section 2.1.42 of ANSI/INCITS 358 standard.
-     * @param width The number of pixels indicating the width of the image
-     * @param height The number of pixels indicating the height of the image
      * @param imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
-     * @param rawImage Pointer to the uncompressed raw image
      * @return quality; the output range is from 0 (lowest quality) to 100 (highest quality)
      */
-    public int getImageQuality(int width, int height, int imageResolution, final byte[] rawImage) {
+    public int getImageQuality(final RawImage raw, int imageResolution) {
 	final IntByReference result = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQuality(width, height, imageResolution, rawImage, result));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQuality(raw.width, raw.height, imageResolution, raw.rawImage, result));
 	return result.getValue();
     }
 
@@ -218,7 +215,7 @@ public class SegLib {
 	for (int i = 0; i < result.segmentedFingersCount; i++) {
 	    final SegmentedFingerprint sf = new SegmentedFingerprint();
 	    result.fingerprints[i] = sf;
-	    sf.rawImage = rawImages[i];
+	    sf.rawImage = new RawImage(outWidth, outHeight, rawImages[i]);
 	    sf.roundingBox = Rect.from(roundingBoxes, i * 8);
 	}
 	return result;

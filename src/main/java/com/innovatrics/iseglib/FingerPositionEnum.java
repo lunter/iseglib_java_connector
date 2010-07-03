@@ -5,11 +5,15 @@ package com.innovatrics.iseglib;
  */
 public enum FingerPositionEnum {
 
-    RightHandFourFingers(13), LeftHandFourFingers(14), TwoThumbs(15);
+    RightHandFourFingers(13, 4),
+    LeftHandFourFingers(14, 4),
+    TwoThumbs(15, 2);
     public final int cval;
+    public final int numberOfFingers;
 
-    private FingerPositionEnum(int cval) {
+    private FingerPositionEnum(int cval, final int numberOfFingers) {
 	this.cval = cval;
+	this.numberOfFingers = numberOfFingers;
     }
 
     public static FingerPositionEnum fromCVal(final int cval) {
