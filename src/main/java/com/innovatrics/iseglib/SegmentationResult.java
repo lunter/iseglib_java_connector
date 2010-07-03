@@ -29,4 +29,8 @@ public class SegmentationResult {
      *		If a given bit in feedback variable is set, the corresponding information is correct. See {@link SegInfoEnum} for all possible feedbacks.
      */
     public EnumSet<SegInfoEnum> feedback;
+    /**
+     * Confidence of the segmentation result. Range: 0-100.
+     */
+    public int confidence;
 }
