@@ -22,7 +22,7 @@ public class Sample {
             System.out.println("Usage: sample slap_image.png");
             System.exit(-1);
         }
-        final SegLib lib = new SegLib();
+        final SegLib lib = SegLib.getInstance();
         lib.init();
         System.out.println("Using SegLib SDK, version: " + lib.getVersion());
         final byte[] in = read(args[0]);

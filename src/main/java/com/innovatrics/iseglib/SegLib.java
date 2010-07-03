@@ -11,6 +11,13 @@ import com.sun.jna.ptr.IntByReference;
  */
 public class SegLib {
 
+    private SegLib() {
+    }
+    private static final SegLib INSTANCE  = new SegLib();
+
+    public static SegLib getInstance() {
+	return INSTANCE;
+    }
     public static final int INTENSITY_THRESHOLD_TOO_DARK = 85;
     public static final int INTENSITY_THRESHOLD_TOO_LIGHT = 15;
     /**
