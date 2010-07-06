@@ -20,6 +20,12 @@
         <system>Redmine</system>
         <url>http://kotoko.local:8081/projects/iseglib-java/issues</url>
     </issueManagement>
+    <distributionManagement>
+        <repository>
+            <id>innovatrics-nexus</id>
+            <url>scp://kotoko.local/home/nexus/sonatype-work/nexus/storage/releases</url>
+        </repository>
+    </distributionManagement>
     <developers>
         <developer>
             <id>mvy</id>
@@ -67,7 +73,7 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <preparationGoals>clean install</preparationGoals>
-                    <goals>clean install</goals>
+                    <goals>clean deploy</goals>
                 </configuration>
             </plugin>
         </plugins>
