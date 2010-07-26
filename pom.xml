@@ -13,12 +13,12 @@
         <url>http://www.innovatrics.com</url>
     </organization>
     <scm>
-        <connection>scm:git:git://github.com/lunter/iseglib_java_connector</connection>
+        <connection>scm:git:ssh://git@github.com/lunter/iseglib_java_connector</connection>
         <url>https://github.com/lunter/ansi_iso_sdk_java_connector</url>
     </scm>
     <issueManagement>
         <system>Redmine</system>
-        <url>http://kotoko.local:8081/projects/iseglib-java/issues</url>
+        <url>http://192.168.1.1:3000/projects/iseglib-java/issues</url>
     </issueManagement>
     <distributionManagement>
         <repository>
