@@ -23,8 +23,11 @@ typedef enum
 #define SEGMENTATION_INFO_LEFT_HAND 1024
 #define SEGMENTATION_INFO_RIGHT_HAND 2048
 
-#define INTENSITY_THRESHOLD_TOO_DARK 85
-#define INTENSITY_THRESHOLD_TOO_LIGHT 15
+#define SEGMENTATION_OPTIONS_NONE 0
+#define SEGMENTATION_OPTIONS_NOISY_BACKGROUND 1
+
+#define INTENSITY_THRESHOLD_TOO_DARK 75
+#define INTENSITY_THRESHOLD_TOO_LIGHT 25
 
 
 /*
@@ -170,7 +173,7 @@ ISEGLIB_API int ISegLib_NFIQScore(int width,int height,int imageResolution,unsig
 
 /*
 Summary:
-	Returns quality of a single fingerprint image
+	Returns quality of a single fingerprint image.
 
 Parameters:
 	width - [in] The number of pixels indicating the width of the image
@@ -236,7 +239,7 @@ Parameters:
 	minFingersCount - [in] Minimum number of fingers that has to be detected in the input slap image. If less fingers are detected, an error code is returned. Valid range: 0..4
 	maxFingersCount - [in] Maximum number of fingers that has to be detected in the input slap image. If more fingers are detected, an error code is returned. Valid range: 0..4
 	maxRotation - [in] Value indicating maximum rotation of fingers in the input slap image. Value is in degrees. Valid range: 0..45
-	options - [in] Reserved for future use, should be set to 0.
+	options - [in] Options parameter, used for enhanced control of segmentation algorithm. See SEGMENTATION_OPTIONS_ defines. Value 0 means no special options.
 	segmentedFingersCount - [out] On return, contains number of fingers found in the input image
 	globalAngle - [out] On return, contains average rotation angle (in degrees) of fingers detected in the input slap image
 	roundingBoxes - [out] On return, contains coordinates of rectangles where detected fingers are lying. 8 numbers are returned for each detected finger, in the following format: [x1,y1],[x2,y2],[x3,y3],[x4,y4]
@@ -251,6 +254,7 @@ Parameters:
 	bcgValue - [in] Value used for background for returned segmented images if these images have smaller dimensions than outWith,outHeight
 	feedback - [out] Indicates extra information such as hand position (left/right), missing finger position (in case when expectedFingersCount=4 but segmentation function finds only 3 prints).
 		If a given bit in feedback variable is set, the corresponding information is correct. See SEGMENTATION_INFO_XXX defines for all possible feedbacks.
+	confidence - [out] Confidence of the segmentation result. Range: 0-100
 
 Return Value List:
 	ISEGLIB_OK - No error occurred.
@@ -260,7 +264,7 @@ Return Value List:
 	ISEGLIB_E_FOUND_LESS_FINGERS - if less fingers than minFingersCount is detected
 	ISEGLIB_E_FOUND_MORE_FINGERS - if more fingers than maxFingersCount is detected
 */
-ISEGLIB_API int ISegLib_SegmentFingerprints(int width,int height,int imageResolution,unsigned char *rawImage,int expectedFingersCount,int minFingersCount,int maxFingersCount,int maxRotation,int options,int *segmentedFingersCount,int *globalAngle,int *roundingBoxes,unsigned char *boxedBmpImage,int *boxedBmpImageLength,int outWidth,int outHeight,unsigned char *rawImage1,unsigned char *rawImage2,unsigned char *rawImage3,unsigned char *rawImage4,unsigned char bcgValue,int *feedback);
+ISEGLIB_API int ISegLib_SegmentFingerprints(int width,int height,int imageResolution,unsigned char *rawImage,int expectedFingersCount,int minFingersCount,int maxFingersCount,int maxRotation,int options,int *segmentedFingersCount,int *globalAngle,int *roundingBoxes,unsigned char *boxedBmpImage,int *boxedBmpImageLength,int outWidth,int outHeight,unsigned char *rawImage1,unsigned char *rawImage2,unsigned char *rawImage3,unsigned char *rawImage4,unsigned char bcgValue,int *feedback,int *confidence);
 
 /*
 Summary:
@@ -318,6 +322,32 @@ ISEGLIB_API int ISegLib_GetImageIntensity(int width,int height,unsigned char *ra
 
 /*
 Summary:
+	Removes background noise from the image.
+
+Description:
+	This function analyzes noise level in the input fingerprint image and sets background (low quality part of the image) to
+	the specified value.
+	This function can be either used with single finger images or with slap images.
+
+Parameters:
+	width - [in] The number of pixels indicating the width of the image
+	height - [in] The number of pixels indicating the height of the image
+	rawImage - [in] Pointer to the uncompressed raw image
+	filterPower - [in] Indicates how much of the background should be eliminated. Valid range: 0..100. Recommended value is 50.
+		Bigger value means more eliminated background.
+	options - [in] Reserved for future use. Always set to 0.
+	bcgValue - [in] Value that will be set in all parts of the image classified as background. 255 means white color.
+	outputRawImage - [out] Pointer where output image (after background removal) will be stored. The size of memory pointed by this parameter has to be at least width*height bytes.
+
+Return Value List:
+	ISEGLIB_OK - No error occurred.
+	ISEGLIB_E_INIT - Library was not initialized.
+	ISEGLIB_E_NULLPARAM - NULL input parameter provided.
+*/
+ISEGLIB_API int ISegLib_RemoveBackgroundNoise(int width,int height,unsigned char *rawImage,int filterPower,int options,unsigned char bcgValue,unsigned char *outputRawImage);
+
+/*
+Summary:
 	Reads formatted image from memory and converts it to raw 8-bit format
 
 Description:
@@ -362,7 +392,9 @@ Parameters:
 	height - [in] The number of pixels indicating the height of the image
 	outImage - [out] Pointer to memory space where output (converted) image will be written
 	imageFormat - [in] Indicates image format in which the output image should be encoded
-	bitrate - [in] Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
+	compressionRate - [in] Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
+		Value of this parameter is interpreted as one over compression ratio (value 20 means compression rate of 1:20 etc.)
+		Value of this parameter has to be greater or equal to 1.
 	length - [in/out] On input, this value is interpreted as the total size of allocated memory pointed by outImage parameter.
 		On return, this parameter will be equal to the total size of the output image after conversion to the specified format.
 
@@ -380,7 +412,7 @@ Return Value List:
 	ISEGLIB_E_INIT - Library was not initialized.
 	ISEGLIB_E_NULLPARAM - NULL input parameter provided.
 */
-ISEGLIB_API int ISegLib_ConvertRawToImage(const unsigned char *rawImage,int width,int height,unsigned char *outImage,ISEGLIB_IMAGE_FORMAT imageFormat,int bitrate,int *length);
+ISEGLIB_API int ISegLib_ConvertRawToImage(const unsigned char *rawImage,int width,int height,unsigned char *outImage,ISEGLIB_IMAGE_FORMAT imageFormat,int compressionRate,int *length);
 
 /*
 Summary:

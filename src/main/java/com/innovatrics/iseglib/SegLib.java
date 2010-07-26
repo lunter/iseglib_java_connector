@@ -73,7 +73,7 @@ public class SegLib {
 
 	int ISegLib_ConvertToRaw(final byte[] imageData, int imageLength, int/*ISEGLIB_IMAGE_FORMAT*/ imageFormat, IntByReference width, IntByReference height, byte[] rawImage, IntByReference rawImageLength);
 
-	int ISegLib_ConvertRawToImage(final byte[] rawImage, int width, int height, byte[] outImage, int /*ISEGLIB_IMAGE_FORMAT*/ imageFormat, int bitrate, IntByReference length);
+	int ISegLib_ConvertRawToImage(final byte[] rawImage, int width, int height, byte[] outImage, int /*ISEGLIB_IMAGE_FORMAT*/ imageFormat, int compressionRate, IntByReference length);
 
 	String ISegLib_GetErrorMessage(int errcode);
 
@@ -290,19 +290,17 @@ public class SegLib {
      *	This function reads raw 8-bit image and encodes it into specified image format
      * @param raw the raw image
      * @param    imageFormat Indicates image format in which the output image should be encoded
-     * @param    bitrate Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
-     *	Real value of bitrate is calculated as bitrate/100.0. For WSQ images, recommended range of this parameter is 5..250 (corresponds to bitrates from 0.05 to 2.5).
-     *	For JPEG2000 images, bitrate is interpreted as desired compression factor. Bitrate 100 means no compression, bitrate 10 means
-     *	that final size of JPEG2000 image should be 10% of the size of original raw image. For JPEG2000, specifying bitrate parameter greater to 100 has
-     *	no effect (produces same result as bitrate=100)
+     * @param    compressionRate Specifies compression rate for JPEG2000 and WSQ images. Ignored for other image formats.
+     *	Value of this parameter is interpreted as one over compression ratio (value 20 means compression rate of 1:20 etc.)
+     *	Value of this parameter has to be greater or equal to 1.
      * @return input image will be encoded as specified and returned. See also values {@link #INTENSITY_THRESHOLD_TOO_DARK} and
      * {@link #INTENSITY_THRESHOLD_TOO_LIGHT} constants for recommended thresholds defining too dark and too light prints.
      */
-    public byte[] convertRawToImage(final RawImage raw, SegLibImageFormatEnum imageFormat, int bitrate) {
+    public byte[] convertRawToImage(final RawImage raw, SegLibImageFormatEnum imageFormat, int compressionRate) {
 	final IntByReference length = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, bitrate, length));
+	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, compressionRate, length));
 	final byte[] result = new byte[length.getValue()];
-	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, result, imageFormat.cval, bitrate, length));
+	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, result, imageFormat.cval, compressionRate, length));
 	return result;
     }
 
