@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+	<id>zip</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>true</includeBaseDirectory>
+	<dependencySets>
+		<!-- Libraries -->
+		<dependencySet>
+			<outputDirectory>/jar</outputDirectory>
+			<unpack>false</unpack>
+		</dependencySet>
+	</dependencySets>
+	<fileSets>
+		<fileSet>
+			<directory>src/main/script</directory>
+			<outputDirectory>/</outputDirectory>
+			<excludes>
+				<exclude>*.sh</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/script</directory>
+			<outputDirectory>/</outputDirectory>
+			<fileMode>0755</fileMode>
+			<includes>
+				<include>*.sh</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+</assembly>
