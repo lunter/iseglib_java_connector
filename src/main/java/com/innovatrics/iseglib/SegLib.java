@@ -36,6 +36,22 @@ public class SegLib {
      * Summary: Defines maximal height of accepted fingerprint images
      */
     public static final int ISEGLIB_MAX_IMAGE_HEIGHT = 1800;
+    /**
+     * Image is blank or contains non-recognizable fingerprint.
+     */
+    public static final int ISEGLIB_E_BLANKIMAGE = 1114;
+    /**
+     * Invalid image or unsupported image format.
+     */
+    public static final int ISEGLIB_E_BADIMAGE = 1115;
+    /**
+     * Found more fingers than expected.
+     */
+    public static final int ISEGLIB_E_FOUND_MORE_FINGERS = 1160;
+    /**
+     * Found less fingers than expected.
+     */
+    public static final int ISEGLIB_E_FOUND_LESS_FINGERS = 1161;
 
     static interface SegLibNative extends Library {
 
