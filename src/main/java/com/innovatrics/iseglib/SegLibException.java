@@ -10,7 +10,7 @@ public class SegLibException extends RuntimeException {
     public final int errorCode;
 
     public SegLibException(final String msg, final int errorCode) {
-        super(msg);
+        super("Error #" + errorCode + ": msg");
         this.errorCode = errorCode;
     }
 }
