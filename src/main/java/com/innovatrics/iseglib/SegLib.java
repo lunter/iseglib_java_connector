@@ -221,7 +221,7 @@ public class SegLib {
 	final byte[] rawImage2 = new byte[outRawLength];
 	final byte[] rawImage3 = new byte[outRawLength];
 	final byte[] rawImage4 = new byte[outRawLength];
-	final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(raw.width, raw.height));
+	final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(raw.width, raw.height, imageResolution));
 	result.boxedBmpImage = new byte[boxedBmpImageLength.getValue()];
 	final IntByReference confidence = new IntByReference();
 	check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.rawImage, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth, outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback, confidence));
@@ -244,7 +244,14 @@ public class SegLib {
 	return result;
     }
 
-    private static int getColorBmpLength(int width, int height) {
+    private static int getColorBmpLength(int width, int height, int resolution) {
+	if (resolution != 500) {
+	    width = (width * 500) / resolution;
+	    height = (height * 500) / resolution;
+	    // avoid rounding errors
+	    width += 10;
+	    height += 10;
+	}
 	int offset = (width * 3) & 0x03;
 	if (offset != 0) {
 	    offset = 4 - offset;
