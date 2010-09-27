@@ -259,11 +259,9 @@ public class SegLib {
 
     private static int getColorBmpLength(int width, int height, int resolution) {
 	if (resolution != 500) {
-	    width = (width * 500) / resolution;
-	    height = (height * 500) / resolution;
-	    // avoid rounding errors
-	    width += 10;
-	    height += 10;
+	    int ratio = 256 * resolution / 500;
+	    height = (height << 8) / ratio;
+	    width = (width << 8) / ratio;
 	}
 	int offset = (width * 3) & 0x03;
 	if (offset != 0) {
