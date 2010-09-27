@@ -184,7 +184,7 @@ public class SegLib {
     public SegLibImage getImageQualityInfo(final RawImage raw, int imageResolution) {
 	final IntByReference length = new IntByReference();
 	final IntByReference activePixelsCount = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, null, length, activePixelsCount));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, null, length, null));
 	final SegLibImage result = new SegLibImage();
 	result.colorQualityBmpImage = new byte[length.getValue()];
 	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, result.colorQualityBmpImage, length, activePixelsCount));
