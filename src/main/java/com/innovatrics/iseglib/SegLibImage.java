@@ -19,7 +19,7 @@ public class SegLibImage {
 
     int originalResolution;
 
-    public Dimension getBoxedBmpImageDimension() {
+    public Dimension getColorQualityBmpImageDimension() {
 	return SegmentationResult.getColorBmpDimension(originalDimension.width, originalDimension.height, originalResolution);
     }
 }
