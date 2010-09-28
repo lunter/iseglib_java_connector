@@ -1,5 +1,6 @@
 package com.innovatrics.iseglib;
 
+import java.awt.Dimension;
 import java.util.EnumSet;
 
 /**
@@ -33,4 +34,21 @@ public class SegmentationResult {
      * Confidence of the segmentation result. Range: 0-100.
      */
     public int confidence;
+
+    Dimension originalDimension;
+
+    int originalResolution;
+
+    public Dimension getBoxedBmpImageDimension() {
+	return getColorBmpDimension(originalDimension.width, originalDimension.height, originalResolution);
+    }
+
+    public static Dimension getColorBmpDimension(int width, int height, int resolution) {
+	if (resolution != 500) {
+	    int ratio = 256 * resolution / 500;
+	    height = (height << 8) / ratio;
+	    width = (width << 8) / ratio;
+	}
+	return new Dimension(width, height);
+    }
 }
