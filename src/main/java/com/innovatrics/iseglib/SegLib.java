@@ -4,6 +4,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.IntByReference;
+import java.awt.Dimension;
 
 /**
  * Contains bindings for the libiseglib.so library.
@@ -167,28 +168,30 @@ public class SegLib {
      */
     public int getImageQuality(final RawImage raw, int imageResolution) {
 	final IntByReference result = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQuality(raw.width, raw.height, imageResolution, raw.rawImage, result));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQuality(raw.width, raw.height, imageResolution, raw.image, result));
 	return result.getValue();
     }
 
     /**
      *	Returns color image quality map and total number of active pixels in the image.<p/>
-     * 	This function returns color quality map as bmp image of the input fingerprint image.
+     * 	This function returns color quality map as truecolor RGB bmp image of the input fingerprint image.
      *	It also retuns total number of active pixels (pixels located in high quality zone, not lying in the noisy background).
      *	Total active pixels count can be used in order to detect void/blank images.
      *	This function works for both slap images and single finger images.
      * @param	imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
      * @param	raw uncompressed raw image
-     * @return image with quality.
+     * @return Quality map image - a truecolor RGB BMP.
      */
     public SegLibImage getImageQualityInfo(final RawImage raw, int imageResolution) {
 	final IntByReference length = new IntByReference();
 	final IntByReference activePixelsCount = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, null, length, null));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.image, null, length, null));
 	final SegLibImage result = new SegLibImage();
 	result.colorQualityBmpImage = new byte[length.getValue()];
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.rawImage, result.colorQualityBmpImage, length, activePixelsCount));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.image, result.colorQualityBmpImage, length, activePixelsCount));
 	result.activePixelsCount = activePixelsCount.getValue();
+	result.originalDimension = raw.getDimension();
+	result.originalResolution = imageResolution;
 	return result;
     }
 
@@ -210,9 +213,10 @@ public class SegLib {
      * @param	outHeight Indicates height of returned raw images of segmented fingers. If found segmented fingers are smaller, they will be centered in the middle and border will be set to bcgValue
      * If null, the RAW images of the fingers will not be returned.
      * @param	bcgValue Value used for background for returned segmented images if these images have smaller dimensions than outWith,outHeight
+     * @param isBoxedBmpImage if true then the {@link SegmentationResult#boxedBmpImage} image will also be filled.
      * @return segmentation result, never null.
      */
-    public SegmentationResult segmentFingerprints(final RawImage raw, int imageResolution, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, Integer outWidth, Integer outHeight, byte bcgValue) {
+    public SegmentationResult segmentFingerprints(final RawImage raw, int imageResolution, int expectedFingersCount, int minFingersCount, int maxFingersCount, int maxRotation, int options, Integer outWidth, Integer outHeight, byte bcgValue, final boolean isBoxedBmpImage) {
 	final SegmentationResult result = new SegmentationResult();
 	final IntByReference globalAngle = new IntByReference();
 	final IntByReference segmentedFingersCount = new IntByReference();
@@ -234,11 +238,11 @@ public class SegLib {
 	    rawImage3 = new byte[outRawLength];
 	    rawImage4 = new byte[outRawLength];
 	}
-	final IntByReference boxedBmpImageLength = new IntByReference(getColorBmpLength(raw.width, raw.height, imageResolution));
-	result.boxedBmpImage = new byte[boxedBmpImageLength.getValue()];
+	final IntByReference boxedBmpImageLength = isBoxedBmpImage ? new IntByReference(getColorBmpLength(raw.width, raw.height, imageResolution)) : null;
+	result.boxedBmpImage = isBoxedBmpImage ? new byte[boxedBmpImageLength.getValue()] : null;
 	final IntByReference confidence = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.rawImage, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth == null ? 400 : outWidth, outHeight == null ? 500 : outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback, confidence));
-	if (boxedBmpImageLength.getValue() > result.boxedBmpImage.length) {
+	check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.image, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth == null ? 400 : outWidth, outHeight == null ? 500 : outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback, confidence));
+	if (isBoxedBmpImage && boxedBmpImageLength.getValue() > result.boxedBmpImage.length) {
 	    // the array was not sufficient. This is not expected... the getColorBmpLength method should have computed the correct number...
 	    throw new AssertionError("the array was not sufficient: assumed that " + result.boxedBmpImage.length + " bytes would be enough but " + boxedBmpImageLength.getValue() + " was requested");
 	}
@@ -246,6 +250,8 @@ public class SegLib {
 	result.segmentedFingersCount = segmentedFingersCount.getValue();
 	result.feedback = SegInfoEnum.fromFeedback(feedback.getValue());
 	result.confidence = confidence.getValue();
+	result.originalDimension = raw.getDimension();
+	result.originalResolution = imageResolution;
 	final byte[][] rawImages = new byte[][]{rawImage1, rawImage2, rawImage3, rawImage4};
 	result.fingerprints = new SegmentedFingerprint[result.segmentedFingersCount];
 	for (int i = 0; i < result.segmentedFingersCount; i++) {
@@ -258,16 +264,12 @@ public class SegLib {
     }
 
     private static int getColorBmpLength(int width, int height, int resolution) {
-	if (resolution != 500) {
-	    int ratio = 256 * resolution / 500;
-	    height = (height << 8) / ratio;
-	    width = (width << 8) / ratio;
-	}
-	int offset = (width * 3) & 0x03;
+	final Dimension dim = SegmentationResult.getColorBmpDimension(width, height, resolution);
+	int offset = (dim.width * 3) & 0x03;
 	if (offset != 0) {
 	    offset = 4 - offset;
 	}
-	return 54 + (3 * width + offset) * height;
+	return 54 + (3 * dim.width + offset) * dim.height;
     }
 
     /**
@@ -281,7 +283,7 @@ public class SegLib {
      */
     public byte[] manualSegmentation(final RawImage raw, final Rect rect, int outWidth, int outHeight, byte bcgValue) {
 	final byte[] outRawImage = new byte[outWidth * outHeight];
-	check(SegLibNative.INSTANCE.ISegLib_ManualSegmentation(raw.width, raw.height, raw.rawImage, rect.point1.x, rect.point1.y, rect.point2.x, rect.point2.y, rect.point3.x, rect.point3.y, rect.point4.x, rect.point4.y, outWidth, outHeight, outRawImage, bcgValue));
+	check(SegLibNative.INSTANCE.ISegLib_ManualSegmentation(raw.width, raw.height, raw.image, rect.point1.x, rect.point1.y, rect.point2.x, rect.point2.y, rect.point3.x, rect.point3.y, rect.point4.x, rect.point4.y, outWidth, outHeight, outRawImage, bcgValue));
 	return outRawImage;
     }
 
@@ -296,7 +298,7 @@ public class SegLib {
      */
     public int getImageIntensity(final RawImage raw) {
 	final IntByReference intensity = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_GetImageIntensity(raw.width, raw.height, raw.rawImage, intensity));
+	check(SegLibNative.INSTANCE.ISegLib_GetImageIntensity(raw.width, raw.height, raw.image, intensity));
 	return intensity.getValue();
     }
 
@@ -332,9 +334,9 @@ public class SegLib {
      */
     public byte[] convertRawToImage(final RawImage raw, SegLibImageFormatEnum imageFormat, int compressionRate) {
 	final IntByReference length = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, null, imageFormat.cval, compressionRate, length));
+	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.image, raw.width, raw.height, null, imageFormat.cval, compressionRate, length));
 	final byte[] result = new byte[length.getValue()];
-	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.rawImage, raw.width, raw.height, result, imageFormat.cval, compressionRate, length));
+	check(SegLibNative.INSTANCE.ISegLib_ConvertRawToImage(raw.image, raw.width, raw.height, result, imageFormat.cval, compressionRate, length));
 	return result;
     }
 
@@ -352,7 +354,7 @@ public class SegLib {
      */
     public byte[] removeBackgroundNoise(final RawImage raw, int filterPower, int options, byte bcgValue, byte[] outputRawImage) {
 	final byte[] result = new byte[raw.width * raw.height];
-	check(SegLibNative.INSTANCE.ISegLib_RemoveBackgroundNoise(raw.width, raw.height, raw.rawImage, filterPower, options, bcgValue, result));
+	check(SegLibNative.INSTANCE.ISegLib_RemoveBackgroundNoise(raw.width, raw.height, raw.image, filterPower, options, bcgValue, result));
 	return result;
     }
 
