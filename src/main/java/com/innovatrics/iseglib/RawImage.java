@@ -13,7 +13,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 
 /**
- * Holds a raw image.
+ * Holds a raw image in 8-bit grayscale raw format (0=black, 127=gray, 255=white),
  * @author Martin Vysny
  */
 public class RawImage {
