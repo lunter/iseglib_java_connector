@@ -239,6 +239,7 @@ public class SegLib {
 	}
 	final IntByReference boxedBmpImageLength = isBoxedBmpImage ? new IntByReference(getColorBmpLength(raw.width, raw.height, imageResolution)) : null;
 	final Dimension boxedBmpImageDim = RawBmpImage.getColorBmpDimension(raw.width, raw.height, imageResolution);
+	result.boxedBmpImageSize = boxedBmpImageDim;
 	final byte[] boxedBmpImage = isBoxedBmpImage ? new byte[boxedBmpImageLength.getValue()] : null;
 	result.boxedBmpImage = boxedBmpImage == null ? null : new RawBmpImage(boxedBmpImage, boxedBmpImageDim.width, boxedBmpImageDim.height);
 	final IntByReference confidence = new IntByReference();

@@ -22,6 +22,10 @@ public class SegmentationResult {
      */
     public SegmentedFingerprint[] fingerprints;
     /**
+     * The size of the boxed BMP image. Specifies maximum coordinates of the segmented fingerprint rectangle ({@link SegmentedFingerprint#roundingBox}).
+     */
+    public Dimension boxedBmpImageSize;
+    /**
      * Color bmp image with color boxes indicating positions of detected fingers
      */
     public RawBmpImage boxedBmpImage;
