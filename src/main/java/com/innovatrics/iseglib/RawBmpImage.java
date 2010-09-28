@@ -39,7 +39,7 @@ public final class RawBmpImage {
     }
 
     public int getScanlineWidth() {
-	return width + offset;
+	return width * 3 + offset;
     }
 
     /**
