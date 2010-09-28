@@ -187,11 +187,10 @@ public class SegLib {
 	final IntByReference activePixelsCount = new IntByReference();
 	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.image, null, length, null));
 	final SegLibImage result = new SegLibImage();
-	result.colorQualityBmpImage = new byte[length.getValue()];
-	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.image, result.colorQualityBmpImage, length, activePixelsCount));
+	final Dimension colorQualityImageDim = RawBmpImage.getColorBmpDimension(raw.width, raw.height, imageResolution);
+	result.colorQualityImage = new RawBmpImage(new byte[length.getValue()], colorQualityImageDim.width, colorQualityImageDim.height);
+	check(SegLibNative.INSTANCE.ISegLib_GetImageQualityInfo(raw.width, raw.height, imageResolution, raw.image, result.colorQualityImage.bmp, length, activePixelsCount));
 	result.activePixelsCount = activePixelsCount.getValue();
-	result.originalDimension = raw.getDimension();
-	result.originalResolution = imageResolution;
 	return result;
     }
 
@@ -239,19 +238,19 @@ public class SegLib {
 	    rawImage4 = new byte[outRawLength];
 	}
 	final IntByReference boxedBmpImageLength = isBoxedBmpImage ? new IntByReference(getColorBmpLength(raw.width, raw.height, imageResolution)) : null;
-	result.boxedBmpImage = isBoxedBmpImage ? new byte[boxedBmpImageLength.getValue()] : null;
+	final Dimension boxedBmpImageDim = RawBmpImage.getColorBmpDimension(raw.width, raw.height, imageResolution);
+	final byte[] boxedBmpImage = isBoxedBmpImage ? new byte[boxedBmpImageLength.getValue()] : null;
+	result.boxedBmpImage = boxedBmpImage == null ? null : new RawBmpImage(boxedBmpImage, boxedBmpImageDim.width, boxedBmpImageDim.height);
 	final IntByReference confidence = new IntByReference();
-	check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.image, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, result.boxedBmpImage, boxedBmpImageLength, outWidth == null ? 400 : outWidth, outHeight == null ? 500 : outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback, confidence));
-	if (isBoxedBmpImage && boxedBmpImageLength.getValue() > result.boxedBmpImage.length) {
+	check(SegLibNative.INSTANCE.ISegLib_SegmentFingerprints(raw.width, raw.height, imageResolution, raw.image, expectedFingersCount, minFingersCount, maxFingersCount, maxRotation, options, segmentedFingersCount, globalAngle, roundingBoxes, boxedBmpImage, boxedBmpImageLength, outWidth == null ? 400 : outWidth, outHeight == null ? 500 : outHeight, rawImage1, rawImage2, rawImage3, rawImage4, bcgValue, feedback, confidence));
+	if (isBoxedBmpImage && boxedBmpImageLength.getValue() > boxedBmpImage.length) {
 	    // the array was not sufficient. This is not expected... the getColorBmpLength method should have computed the correct number...
-	    throw new AssertionError("the array was not sufficient: assumed that " + result.boxedBmpImage.length + " bytes would be enough but " + boxedBmpImageLength.getValue() + " was requested");
+	    throw new AssertionError("the array was not sufficient: assumed that " + boxedBmpImage.length + " bytes would be enough but " + boxedBmpImageLength.getValue() + " was requested");
 	}
 	result.globalAngle = globalAngle.getValue();
 	result.segmentedFingersCount = segmentedFingersCount.getValue();
 	result.feedback = SegInfoEnum.fromFeedback(feedback.getValue());
 	result.confidence = confidence.getValue();
-	result.originalDimension = raw.getDimension();
-	result.originalResolution = imageResolution;
 	final byte[][] rawImages = new byte[][]{rawImage1, rawImage2, rawImage3, rawImage4};
 	result.fingerprints = new SegmentedFingerprint[result.segmentedFingersCount];
 	for (int i = 0; i < result.segmentedFingersCount; i++) {
@@ -264,11 +263,8 @@ public class SegLib {
     }
 
     private static int getColorBmpLength(int width, int height, int resolution) {
-	final Dimension dim = SegmentationResult.getColorBmpDimension(width, height, resolution);
-	int offset = (dim.width * 3) & 0x03;
-	if (offset != 0) {
-	    offset = 4 - offset;
-	}
+	final Dimension dim = RawBmpImage.getColorBmpDimension(width, height, resolution);
+	final int offset = RawBmpImage.getOffset(dim.width);
 	return 54 + (3 * dim.width + offset) * dim.height;
     }
 

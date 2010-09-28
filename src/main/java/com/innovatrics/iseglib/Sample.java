@@ -36,7 +36,7 @@ public class Sample {
         final int outWidth = 400;
         final int outHeight = 500;
         final SegmentationResult segs = lib.segmentFingerprints(img, resolution, expectedFingersCount, minimumFingersCount, maximumFingersCount, maxRotation, 0, outWidth, outHeight, (byte) 255, true);
-        write(segs.boxedBmpImage, "slap_out.bmp");
+        write(segs.boxedBmpImage.bmp, "slap_out.bmp");
         System.out.println("Segmented image saved as slap_out.bmp");
         System.out.println("Detected fingers count: " + segs.segmentedFingersCount);
         System.out.println("Detected global rotation angle: " + segs.globalAngle);
