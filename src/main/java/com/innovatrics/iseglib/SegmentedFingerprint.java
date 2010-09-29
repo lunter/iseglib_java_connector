@@ -6,7 +6,7 @@ package com.innovatrics.iseglib;
  */
 public class SegmentedFingerprint {
     /**
-     *  Detected finger will be stored (sequence going from left to right). Image will be stored here as uncompressed raw image, the size of this array will be equal to outWidth * outHeight
+     *  Detected finger will be stored (sequence going from left to right). Image will be stored here as uncompressed raw image. The resolution is always 500 DPI.
      */
     public RawImage rawImage;
     /**
