@@ -14,7 +14,7 @@
     </organization>
     <scm>
         <connection>scm:git:ssh://git@github.com/lunter/iseglib_java_connector</connection>
-        <url>https://github.com/lunter/ansi_iso_sdk_java_connector</url>
+        <url>https://github.com/lunter/iseglib_java_connector</url>
     </scm>
     <issueManagement>
         <system>Redmine</system>
