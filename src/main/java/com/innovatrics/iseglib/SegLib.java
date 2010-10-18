@@ -19,8 +19,8 @@ public class SegLib {
     public static SegLib getInstance() {
 	return INSTANCE;
     }
-    public static final int INTENSITY_THRESHOLD_TOO_DARK = 85;
-    public static final int INTENSITY_THRESHOLD_TOO_LIGHT = 15;
+    public static final int INTENSITY_THRESHOLD_TOO_DARK = 75;
+    public static final int INTENSITY_THRESHOLD_TOO_LIGHT = 25;
     /**
      * Summary: Defines minimal width of accepted fingerprint images
      */
