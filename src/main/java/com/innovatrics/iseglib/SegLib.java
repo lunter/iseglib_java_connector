@@ -154,9 +154,24 @@ public class SegLib {
      * @param rawImage Pointer to the uncompressed raw image
      * @return NFIQ score, the output range is from 1 (highest quality) to 5 (lowest quality)
      */
+    @Deprecated
     public int nfiqScore(int width, int height, int imageResolution, final byte[] rawImage) {
 	final IntByReference result = new IntByReference();
 	check(SegLibNative.INSTANCE.ISegLib_NFIQScore(width, height, imageResolution, rawImage, result));
+	return result.getValue();
+    }
+
+    /**
+     * Returns NFIQ score (quality score defined by NIST) a single fingerprint image.<p/>
+     * This function returns NFIQ score (quality score defined by NIST) a fingerprint image
+     * quality of the input fingerprint image. Image quality number is calculated in accordance with the general guidelines contained in Section 2.1.42 of ANSI/INCITS 358 standard.
+     * @param imageResolution Resolution (in DPI) of the input image. Typical resolution is 500 DPI.
+     * @param rawImage Pointer to the uncompressed raw image
+     * @return NFIQ score, the output range is from 1 (highest quality) to 5 (lowest quality)
+     */
+    public int nfiqScore(RawImage rawImage, int imageResolution) {
+	final IntByReference result = new IntByReference();
+	check(SegLibNative.INSTANCE.ISegLib_NFIQScore(rawImage.width, rawImage.height, imageResolution, rawImage.image, result));
 	return result.getValue();
     }
 
