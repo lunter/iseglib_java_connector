@@ -13,4 +13,9 @@ public class SegmentedFingerprint {
      * Contains coordinates of rectangle where detected finger is lying.
      */
     public Rect roundingBox;
+
+    @Override
+    public String toString() {
+        return "SegmentedFingerprint{rawImage=" + rawImage + ", roundingBox=" + roundingBox + '}';
+    }
 }

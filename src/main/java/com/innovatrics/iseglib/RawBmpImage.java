@@ -73,4 +73,9 @@ public final class RawBmpImage {
 //    }
 //    private static final ColorModel RGB_COLOR_MODEL = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8}, false, true, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 //    private static final int[] TRUECOLOR_BMP_BAND_OFFSETS = new int[]{2, 1, 0};
+
+    @Override
+    public String toString() {
+        return "RawBmpImage{" + width + "x" + height + "}";
+    }
 }

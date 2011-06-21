@@ -1,6 +1,7 @@
 package com.innovatrics.iseglib;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 /**
@@ -38,4 +39,9 @@ public class SegmentationResult {
      * Confidence of the segmentation result. Range: 0-100.
      */
     public int confidence;
+
+    @Override
+    public String toString() {
+        return "SegmentationResult{fingers:" + segmentedFingersCount + ", globalAngle:" + globalAngle + ", feedback:" + (feedback == null ? null : new ArrayList<SegInfoEnum>(feedback)) + ", confidence:" + confidence + "}";
+    }
 }

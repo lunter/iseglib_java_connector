@@ -12,4 +12,9 @@ public class SegLibImage {
      * Total count of active pixels (pixels in high quality zone not lying in noisy background)
      */
     public int activePixelsCount;
+
+    @Override
+    public String toString() {
+        return "SegLibImage{activePixels=" + activePixelsCount + ",colorImage=" + colorQualityImage + "}";
+    }
 }
