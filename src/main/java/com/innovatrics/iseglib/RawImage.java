@@ -1,17 +1,5 @@
 package com.innovatrics.iseglib;
 
-import java.awt.Dimension;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
-
 /**
  * Holds a raw image in 8-bit grayscale raw format (0=black, 127=gray, 255=white),
  * @author Martin Vysny
@@ -49,15 +37,6 @@ public class RawImage {
     public String toString() {
 	return "RawImage{" + width + "x" + height + '}';
     }
-
-    public BufferedImage toBufferedImage() {
-	final SampleModel sm = DEFAULT_COLOR_MODEL.createCompatibleSampleModel(width, height);
-	final DataBufferByte db = new DataBufferByte(image, width * height);
-	final WritableRaster raster = Raster.createWritableRaster(sm, db, null);
-	final BufferedImage result = new BufferedImage(DEFAULT_COLOR_MODEL, raster, false, null);
-	return result;
-    }
-    private static final ColorModel DEFAULT_COLOR_MODEL = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[]{8}, false, true, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
     /**
      * Returns a pixel located on x,y coordinates. 

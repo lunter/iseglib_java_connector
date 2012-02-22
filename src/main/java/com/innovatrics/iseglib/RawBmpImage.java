@@ -1,7 +1,5 @@
 package com.innovatrics.iseglib;
 
-import java.awt.Dimension;
-
 /**
  * Holds a serialized version of BMP image as produced by the SegLib library routines. The image is always in a RGB format.
  * @author Martin Vysny

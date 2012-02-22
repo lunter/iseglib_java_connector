@@ -1,7 +1,5 @@
 package com.innovatrics.iseglib;
 
-import java.awt.Point;
-
 /**
  * A rectangle, may eventually be rotated.
  * @author Martin Vysny
@@ -9,10 +7,10 @@ import java.awt.Point;
 public class Rect {
 
     public Rect(Rect other) {
-        point1 = new Point(other.point1);
-        point2 = new Point(other.point2);
-        point3 = new Point(other.point3);
-        point4 = new Point(other.point4);
+        point1 = other.point1;
+        point2 = other.point2;
+        point3 = other.point3;
+        point4 = other.point4;
     }
 
     public Rect(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {

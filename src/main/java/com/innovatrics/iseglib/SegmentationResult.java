@@ -1,6 +1,5 @@
 package com.innovatrics.iseglib;
 
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
